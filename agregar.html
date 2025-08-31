@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestor de Adopciones - Agregar aviso</title>
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+<header class="site-header">
+  <h1>Gestor de adopciones</h1>
+  <nav aria-label="Principal">
+    <ul class="menu">
+      <li><a href="./index.html">Portada</a></li>
+      <li><a aria-current="page" href="./agregar.html">Agregar aviso de adopción</a></li>
+      <li><a href="./listado.html">Ver listado de adopciones</a></li>
+      <li><a href="./estadisticas.html">Estadísticas</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <h2>Agregar aviso de adopción</h2>
+
+  <div id="errores" class="alerta" role="alert" aria-live="polite" hidden></div>
+
+  <form id="form-aviso" novalidate>
+    <!-- 1) ¿Dónde? -->
+    <fieldset>
+      <legend>¿Dónde?</legend>
+
+      <div class="campo">
+        <label for="region">Región *</label>
+        <select id="region" name="region">
+          <option value="">Seleccione una región</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="comuna">Comuna *</label>
+        <select id="comuna" name="comuna" disabled>
+          <option value="">Seleccione una comuna</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="sector">Sector</label>
+        <input id="sector" name="sector" type="text" maxlength="100" placeholder="Ej: Lugar, Espacio">
+      </div>
+    </fieldset>
+
+    <!-- 2) ¿Contacto de esta publicación? -->
+    <fieldset>
+      <legend>¿Contacto de esta publicación?</legend>
+
+      <div class="campo">
+        <label for="nombre">Nombre *</label>
+        <input id="nombre" name="nombre" type="text" minlength="3" maxlength="200" placeholder="Ej: Allan Rabanales">
+      </div>
+
+      <div class="campo">
+        <label for="email">Email *</label>
+        <input id="email" name="email" type="email" maxlength="100" placeholder="ejemplo@dominio.com">
+      </div>
+
+      <div class="campo">
+        <label for="celular">Número de celular</label>
+        <input id="celular" name="celular" type="tel" placeholder="Ej: +569.12345678">
+      </div>
+
+      <div class="campo">
+        <label for="contactarPor">Contactar por</label>
+        <select id="contactarPor" name="contactarPor">
+          <option value="">Seleccionar red social (opcional)</option>
+          <option value="Whatsapp">Whatsapp</option>
+          <option value="Telegram">Telegram</option>
+          <option value="X">X</option>
+          <option value="Instagram">Instagram</option>
+          <option value="Tiktok">Tiktok</option>
+          <option value="Otra">Otra</option>
+        </select>
+      </div>
+      <div id="redes-sociales-container"></div>
+    </fieldset>
+
+    <!-- 3) ¿Qué mascota ofrece en adopción? -->
+    <fieldset>
+      <legend>¿Qué mascota ofrece en adopción?</legend>
+
+      <!-- Tipo (radios) -->
+      <fieldset class="campo">
+        <legend>Tipo *</legend>
+        <label>
+          <input type="radio" name="tipo" value="gato"> gato
+        </label>
+        <label>
+          <input type="radio" name="tipo" value="perro"> perro
+        </label>
+      </fieldset>
+
+      <div class="campo">
+        <label for="cantidad">Cantidad *</label>
+        <input id="cantidad" name="cantidad" type="number" inputmode="numeric" min="1" step="1" placeholder="Ej: 2">
+      </div>
+
+      <div class="campo">
+        <label for="edad">Edad *</label>
+        <input id="edad" name="edad" type="number" inputmode="numeric" min="1" step="1" placeholder="Ej: 1">
+      </div>
+
+      <!-- Unidad de Edad (radios) -->
+      <fieldset class="campo">
+        <legend>Unidad de Edad *</legend>
+        <label>
+          <input type="radio" name="unidadEdad" value="meses"> meses
+        </label>
+        <label>
+          <input type="radio" name="unidadEdad" value="años"> años
+        </label>
+      </fieldset>
+
+      <div class="campo">
+        <label for="fechaDisponible">Fecha disponible para entrega *</label>
+        <input id="fechaDisponible" name="fechaDisponible" type="datetime-local">
+      </div>
+
+      <div class="campo">
+        <label for="descripcion">Descripción</label>
+        <textarea id="descripcion" name="descripcion" cols="50" rows="10" placeholder="Información Adicional"></textarea>
+      </div>
+
+      <div class="campo">
+        <label>Fotos * (mín. 1, máx. 5)</label>
+        <div id="fotos-container" class="grupo-fotos"></div>
+        <button type="button" id="btnAgregarFoto" class="button-link">Agregar otra foto</button>
+      </div>
+    </fieldset>
+
+    <div class="acciones">
+      <button type="submit" class="button-link">Agregar este aviso de adopción</button>
+      <a href="./index.html" class="button-link">Volver a la Portada</a>
+    </div>
+  </form>
+
+  <!-- Confirmación -->
+  <dialog id="confirmDialog">
+    <form method="dialog">
+      <p><strong>¿Está seguro que desea agregar este aviso de adopción?</strong></p>
+      <div>
+        <button value="no" class="button-link">No, volver al formulario</button>
+        <button id="confirmSi" value="si" class="button-link">Sí, estoy seguro</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Mensaje final -->
+  <section id="exito" hidden aria-labelledby="exito-title">
+    <h2 id="exito-title" class="sr-only">Operación exitosa</h2>
+    <p><strong>Hemos recibido la información de adopción, ¡Muchas gracias y suerte!</strong></p>
+    <p><a href="./index.html" class="button-link">Volver a la portada</a></p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <p>CC5002 - Desarrollo de aplicaciones web - Allan Rabanales</p>
+</footer>
+
+<script src="./js/region_comuna.js"></script>
+<script src="./js/validaciones.js"></script>
+<script src="./js/agregar.js"></script>
+</body>
+</html>
