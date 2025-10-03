@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Agregar aviso de adopción</h2>
+
+<form method="post" enctype="multipart/form-data" action="{{ url_for('web.agregar_post') }}">
+
+  <!-- ¿Dónde? -->
+  <fieldset class="card">
+    <legend>¿Dónde?</legend>
+    <div class="form-grid form-2">
+      <div class="field">
+        <label for="region">Región <span class="req">*</span></label>
+        <select name="region_id" id="region" required>
+          <option value="">Seleccione una región</option>
+          {% for r in regiones %}
+            <option value="{{ r.id }}"
+              {% if (selected_region and (r.id|string == selected_region|string))
+                    or (request.form.get('region_id') and (r.id|string == request.form.get('region_id')|string)) %}
+                selected
+              {% endif %}
+            >{{ r.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="comuna">Comuna <span class="req">*</span></label>
+        <select name="comuna_id" id="comuna" required disabled>
+          <option value="">Seleccione una comuna</option>
+        </select>
+      </div>
+
+      <div class="field col-span-2">
+        <label for="sector">Sector</label>
+        <input type="text" id="sector" name="sector" maxlength="100"
+               placeholder="Ej: Lugar, Espacio" value="{{ request.form.get('sector','') }}">
+      </div>
+    </div>
+  </fieldset>
+
+  <!-- Contacto -->
+  <fieldset class="card">
+    <legend>¿Contacto de esta publicación?</legend>
+    <div class="form-grid form-2">
+      <div class="field">
+        <label for="nombre">Nombre <span class="req">*</span></label>
+        <input type="text" id="nombre" name="nombre" required minlength="3" maxlength="200"
+               placeholder="Ej: Allan Rabanales" value="{{ request.form.get('nombre','') }}">
+      </div>
+
+      <div class="field">
+        <label for="email">Email <span class="req">*</span></label>
+        <input type="email" id="email" name="email" required maxlength="100"
+               placeholder="ejemplo@dominio.com" value="{{ request.form.get('email','') }}">
+      </div>
+
+      <div class="field">
+        <label for="celular">Número de celular</label>
+        <input type="tel" id="celular" name="celular" placeholder="+569.12345678"
+               value="{{ request.form.get('celular','') }}">
+      </div>
+
+      <div class="field">
+        <label for="cp_nombre_0">Contactar por <span class="muted">(opcional)</span></label>
+        <div class="inline">
+          <select name="cp_nombre" id="cp_nombre_0">
+            <option value="">Seleccionar red social (opcional)</option>
+            <option value="whatsapp">whatsapp</option>
+            <option value="telegram">telegram</option>
+            <option value="X">X</option>
+            <option value="instagram">instagram</option>
+            <option value="tiktok">tiktok</option>
+            <option value="otra">otra</option>
+          </select>
+          <input type="text" name="cp_identificador" placeholder="ID o URL" maxlength="50"
+                 value="{{ (request.form.getlist('cp_identificador') or [''])[0] }}">
+        </div>
+        <button type="button" class="button-link small" id="addContact">Agregar otra red (máx. 5)</button>
+      </div>
+    </div>
+  </fieldset>
+
+  <!-- Mascota -->
+  <fieldset class="card">
+    <legend>¿Qué mascota ofrece en adopción?</legend>
+    <div class="form-grid form-2">
+      <div class="field">
+        <span class="label">Tipo <span class="req">*</span></span>
+        {% set tipo = request.form.get('tipo','') %}
+        <label class="radio"><input type="radio" name="tipo" value="gato"  {{ 'checked' if tipo=='gato' else '' }} required> gato</label>
+        <label class="radio"><input type="radio" name="tipo" value="perro" {{ 'checked' if tipo=='perro' else '' }} required> perro</label>
+      </div>
+
+      <div class="field">
+        <label for="cantidad">Cantidad <span class="req">*</span></label>
+        <input type="number" id="cantidad" name="cantidad" min="1" required placeholder="Ej: 2"
+               value="{{ request.form.get('cantidad','') }}">
+      </div>
+
+      <div class="field">
+        <label for="edad">Edad <span class="req">*</span></label>
+        <input type="number" id="edad" name="edad" min="1" required placeholder="Ej: 1"
+               value="{{ request.form.get('edad','') }}">
+      </div>
+
+      <div class="field">
+        <span class="label">Unidad de Edad <span class="req">*</span></span>
+        {% set unidad = request.form.get('unidad_medida','') %}
+        <label class="radio"><input type="radio" name="unidad_medida" value="m" {{ 'checked' if unidad=='m' else '' }} required> meses</label>
+        <label class="radio"><input type="radio" name="unidad_medida" value="a" {{ 'checked' if unidad=='a' else '' }} required> años</label>
+      </div>
+
+      <div class="field col-span-2">
+        <label for="fecha_entrega">Fecha disponible para entrega <span class="req">*</span></label>
+        <input type="datetime-local" id="fecha_entrega" name="fecha_entrega" required
+               value="{{ (request.form.get('fecha_entrega') or min_fecha.strftime('%Y-%m-%dT%H:%M')) }}">
+      </div>
+
+      <div class="field col-span-2">
+        <label for="descripcion">Descripción</label>
+        <textarea id="descripcion" name="descripcion" rows="6" placeholder="Información Adicional">{{ request.form.get('descripcion','') }}</textarea>
+      </div>
+    </div>
+  </fieldset>
+
+  <!-- Fotos -->
+  <fieldset class="card">
+    <legend>Fotos</legend>
+    <p class="muted">Fotos <strong>(mín. 1, máx. 5)</strong></p>
+    <div id="fotosWrap" class="files-stack">
+      <input type="file" name="fotos" accept="image/*" required>
+    </div>
+    <button type="button" class="button-link" id="addFoto">Agregar otra foto</button>
+  </fieldset>
+
+  <div class="acciones">
+    <button type="submit" class="button-link" id="submitAviso">Agregar este aviso de adopción</button>
+    <a class="button-link" href="{{ url_for('web.index') }}">Volver a la portada</a>
+  </div>
+</form>
+
+{% endblock %}

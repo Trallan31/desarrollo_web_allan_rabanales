@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Detalle aviso #{{ aviso.id }}</h2>
+
+<div class="card">
+  <dl class="grid-dl">
+    <dt>Fecha Publicación</dt><dd>{{ aviso.fecha_ingreso.strftime("%Y-%m-%d %H:%M") }}</dd>
+    <dt>Fecha Entrega</dt><dd>{{ aviso.fecha_entrega.strftime("%Y-%m-%d %H:%M") }}</dd>
+    <dt>Comuna</dt><dd>{{ aviso.comuna.nombre }}</dd>
+    <dt>Sector</dt><dd>{{ aviso.sector or "-" }}</dd>
+    <dt>Tipo</dt><dd>{{ aviso.tipo }}</dd>
+    <dt>Cantidad</dt><dd>{{ aviso.cantidad }}</dd>
+    <dt>Edad</dt><dd>{{ aviso.edad }} {{ 'meses' if aviso.unidad_medida=='m' else 'años' }}</dd>
+    <dt>Contacto</dt>
+    <dd class="full">
+      <span class="cte">{{ aviso.nombre }} <span class="cte-sep">·</span> {{ aviso.email }}{% if aviso.celular %} <span class="cte-sep">·</span> {{ aviso.celular }}{% endif %}</span>
+      {% if aviso.contactos %}
+        <div class="muted">({{ aviso.contactos|length }} redes: {% for c in aviso.contactos %}{{ c.nombre }}{% if not loop.last %}, {% endif %}{% endfor %})</div>
+      {% endif %}
+    </dd>
+    {% if aviso.descripcion %}
+      <dt>Descripción</dt><dd class="full">{{ aviso.descripcion }}</dd>
+    {% endif %}
+  </dl>
+</div>
+
+{% if aviso.fotos %}
+<div class="galeria">
+  {% for f in aviso.fotos %}
+  <button class="thumb-btn" type="button" data-big="{{ url_for('static', filename=f.ruta_archivo ~ '/' ~ f.nombre_archivo) }}">
+    <img class="thumb" src="{{ url_for('static', filename=f.ruta_archivo ~ '/' ~ f.nombre_archivo) }}" alt="Foto {{ loop.index }}">
+  </button>
+  {% endfor %}
+</div>
+<dialog id="imgModal">
+  <div class="modal-body">
+    <img id="bigImg" alt="Imagen ampliada">
+    <a class="button-link" href="#" onclick="document.getElementById('imgModal').close();return false;">Cerrar</a>
+  </div>
+</dialog>
+{% endif %}
+
+<div class="acciones">
+  <a class="button-link" href="{{ url_for('web.listado') }}">Volver al listado</a>
+  <a class="button-link" href="{{ url_for('web.index') }}">Volver a la portada</a>
+</div>
+{% endblock %}

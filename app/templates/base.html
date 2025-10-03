@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Gestor de Adopciones</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <h1>Gestor de Adopciones</h1>
+    <nav class="menu" aria-label="Menú principal">
+      <a href="{{ url_for('web.index') }}">Portada</a>
+      <a href="{{ url_for('web.agregar_get') }}">Agregar aviso de adopción</a>
+      <a href="{{ url_for('web.listado') }}">Ver listado de adopciones</a>
+      <a href="{{ url_for('web.estadisticas') }}">Estadísticas</a>
+    </nav>
+  </header>
+  <main>
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% if msgs %}
+        <div class="card">
+          {% for cat, msg in msgs %}
+            <p class="{{ 'muted' if cat != 'error' else '' }}">{{ msg }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">CC5002 - Desarrollo de aplicaciones web - Allan Rabanales</footer>
+  <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
+</body>
+</html>

@@ -1,27 +1,41 @@
-# Tarea 1 - Desarrollo Web
+# Tarea 2 - Desarrollo Web
 
 ## Descripción
-La tarea consiste en un prototipo de sistema de adopción de mascotas. 
-La aplicación no guarda datos reales ni requiere servidor; se enfoca en mostrar las interfaces, la validación de formularios y la navegación entre pantallas.
+Esta tarea extiende el prototipo de la **Tarea 1**, pero ahora implementando las funcionalidades con **Flask (Python)** y una base de datos **MySQL** mediante **SQLAlchemy**.
 
-Incluye:
-- **Portada** con los últimos 5 avisos de adopción.
-- **Formulario** para agregar un aviso con validaciones en JS.
-- **Listado** de avisos de ejemplo.
-- **Detalle** de un aviso con fotos ampliables.
+La aplicación permite:
+- **Portada** con mensaje de bienvenida, menú y los últimos 5 avisos reales desde la BD.
+- **Formulario de agregar aviso** con validaciones en **JavaScript** y **Python** (lado servidor). Al enviar, inserta en las tablas `aviso_adopcion`, `contactar_por` y `foto`, y guarda las fotos en disco.
+- **Listado de avisos** obtenido desde la BD, en páginas de 5 filas, con navegación Anterior/Siguiente.
+- **Detalle de aviso** cargado desde la BD, mostrando toda la información y fotos ampliables en un modal.
 - **Estadísticas** representadas con tres gráficos estáticos.
 
 ## Decisiones tomadas
-- Mantener un **diseño consistente** en todas las páginas, reutilizando cabecera, menú y pie de página.
-- Definir **variables CSS** para colores y estilos básicos (`--bg`, `--brand`, `--border`) que facilitan mantener la coherencia visual.
-- Separar la lógica en varios archivos JS:
-  - `portada.js` → muestra los últimos 5 avisos en la portada.
-  - `agregar.js` → controla el formulario (regiones, comunas, validaciones y fotos).
-  - `listado.js` → hace que las filas de la tabla sean clickeables.
-  - `detalle.js` → permite ampliar fotos en una ventana modal con `<dialog>`.
-  - `region_comuna.js` → contiene las regiones y comunas de Chile.
-  - `validaciones.js` → centraliza todas las validaciones del formulario.
-- Para los **gráficos** (punto 4) se eligió usar **SVG estáticos**.
-- Validar todos los formularios solo con **JavaScript** (no con `required`).
-- Usar un **modal con `<dialog>`** para confirmar la creación de un aviso y para ampliar las fotos, mejorando la experiencia de usuario.
-- Asegurar que todo el código pase las validaciones de **HTML y CSS del W3C** para evitar descuentos.
+- Mantener el **diseño de Tarea 1** (misma cabecera, menú y pie de página), adaptando el formulario para integrarlo con Flask y SQLAlchemy.
+- Definir una **estructura de proyecto Flask**:
+  - `app/__init__.py` → configuración de Flask y DB.
+  - `app/models.py` → mapeo de tablas con SQLAlchemy.
+  - `app/routes.py` → vistas de portada, agregar, listado, detalle y estadísticas.
+  - `app/validators.py` → validaciones del formulario en el servidor.
+  - `app/templates/` → templates HTML (con Jinja).
+  - `app/static/` → CSS, JS y carpeta `uploads/` para fotos.
+- En el formulario de **agregar aviso**:
+  - Validaciones en **cliente (JS)** con `required`, confirmación antes de enviar y dinámicas (agregar más fotos/contactos).
+  - Validaciones en **servidor (Python)**: región, comuna, nombre, email, fecha ≥ +3h, fotos (1–5), etc.
+  - Los campos opcionales (`celular`, `contactar por`) no bloquean la inserción si se dejan vacíos.
+- Para las **fotos**:
+  - Se almacenan en `app/static/uploads/<id_aviso>/`.
+  - Se normalizan rutas con `/` para evitar problemas en Windows.
+- Para las **estadísticas**:
+  - Se movieron a una página aparte (`/estadisticas`) como lo pide T2.
+  - Se mantienen los gráficos estáticos en SVG de T1.
+- En la **Tarea 1** tenía varios archivos JS separados (`portada.js`, `agregar.js`, `listado.js`, etc.).  
+  En esta **Tarea 2** decidí consolidarlos en un único archivo `main.js` para simplificar la organización.
+
+## Extra / Dificultades encontradas
+Durante el traspaso desde la Tarea 1 hacia esta Tarea 2 tuve varios inconvenientes:
+
+- En algunos intentos iniciales la aplicación no lograba recibir correctamente los datos desde la base de datos o no procesaba bien el envío de un aviso nuevo.
+- Estos problemas se relacionaban principalmente con la integración de Jinja y la adaptación del formulario de T1 al flujo de Flask + SQLAlchemy.
+- Para asegurar que el flujo de agregar aviso funcionara correctamente decidí rehacer esa parte desde cero, tomando como base lo que ya tenía de T1 pero ajustado al modelo de la base de datos.
+- Como consecuencia, algunos aspectos visuales de la aplicación (por ejemplo tamaños de elementos o disposición en la página) pueden diferir levemente de la versión de T1, pero se mantiene la funcionalidad completa solicitada en el enunciado.
