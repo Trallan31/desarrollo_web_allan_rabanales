@@ -232,12 +232,38 @@ main {padding: 1rem 1.25rem; max-width: 1100px;margin: 0 auto; }
     padding: 1rem;
 }
 
+#comentarios .field { margin: .5rem 0; }
+#comentarios label { display: block; font-weight: 600; margin-bottom: .25rem; }
+#comentarios input[type="text"],
+#comentarios textarea {
+  width: 100%;
+  padding: .5rem .6rem;
+  border: 1px solid var(--border);
+  border-radius: .5rem;
+}
+#comentarios .error { color: #c0392b; display: block; min-height: 1.25rem; }
+#comentarios .ok { color: #0a7d32; margin-top: .25rem; display: none; }
+#comentarios .ok:not([hidden]) { display: block; }
+#comentarios .ok[hidden] { display: none !important; }
+#comentarios .comentarios-lista { list-style: none; padding: 0; margin: .5rem 0 1rem; }
+#comentarios .comentario { border-bottom: 1px solid var(--border); padding: .5rem 0; }
+#comentarios .comentario:last-child { border-bottom: 0; }
+#comentarios .meta { font-size: .9rem; color: #444; display:flex; gap:.5rem; align-items: baseline; }
+#comentarios .meta .nombre { font-weight: 600; }
+#comentarios .texto { margin: .25rem 0 0; white-space: pre-wrap; }
+#comentarios .empty { color: #666; padding: .5rem; font-style: italic; }
+
+
 .chart {
     width: 100%;
-    height: auto;
+    height: 360px;     
     display: block;
     border: 1px solid var(--border);
     border-radius: .75rem;
+}
+
+#grafico-barras-mes.chart {
+  height: 400px;
 }
 
 @media (min-width: 920px) {

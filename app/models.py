@@ -1,4 +1,5 @@
 from . import db
+from sqlalchemy.sql import func
 
 class Region(db.Model):
     __tablename__ = "region"
@@ -29,6 +30,12 @@ class AvisoAdopcion(db.Model):
     unidad_medida = db.Column(db.Enum("a", "m"), nullable=False)
     fecha_entrega = db.Column(db.DateTime, nullable=False)
     descripcion = db.Column(db.Text)
+    comentarios = db.relationship(
+        "Comentario",
+        back_populates = "aviso",
+        order_by = "desc(Comentario.fecha)",
+        cascade = "all, delete-orphan"
+    )
 
     comuna = db.relationship("Comuna", back_populates="avisos")
     fotos = db.relationship("Foto", back_populates="aviso", cascade="all, delete-orphan")
@@ -49,3 +56,13 @@ class ContactarPor(db.Model):
     identificador = db.Column(db.String(150), nullable=False)
     aviso_id = db.Column(db.Integer, db.ForeignKey("aviso_adopcion.id"), nullable=False)
     aviso = db.relationship("AvisoAdopcion", back_populates="contactos")
+    
+class Comentario(db.Model):
+    __tablename__ = "comentario"
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    nombre = db.Column(db.String(80), nullable=False)
+    texto  = db.Column(db.String(300), nullable=False)
+    fecha  = db.Column(db.DateTime, nullable=False, server_default=func.now())
+    aviso_id = db.Column(db.Integer, db.ForeignKey("aviso_adopcion.id"), nullable=False)
+
+    aviso = db.relationship("AvisoAdopcion", back_populates="comentarios")

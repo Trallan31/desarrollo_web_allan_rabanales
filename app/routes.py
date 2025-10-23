@@ -1,10 +1,11 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from werkzeug.utils import secure_filename
 import os
 from . import db
-from .models import Region, Comuna, AvisoAdopcion, Foto, ContactarPor
-from .validators import validate_aviso, _canon_media
+from .models import Region, Comuna, AvisoAdopcion, Foto, ContactarPor, Comentario
+from .validators import validate_aviso, _canon_media, validate_comentario
+from sqlalchemy import func, extract
 
 bp = Blueprint("web", __name__)
 
@@ -117,4 +118,112 @@ def agregar_post():
     flash("Hemos recibido la información de adopción, muchas gracias y suerte!", "ok")
     return redirect(url_for("web.index"))
 
+# ========== API ESTADÍSTICAS ==========
+@bp.route("/api/estadisticas/por-dia")
+def api_estadisticas_por_dia():
+    try:
+        dias = int(request.args.get("dias", 7))
+        hoy = date.today()
+        desde = hoy - timedelta(days=dias - 1)
+        
+        fecha_dia = func.date(AvisoAdopcion.fecha_ingreso)
+        rows = (
+            db.session.query(fecha_dia.label("fecha"), func.count().label("cantidad"))
+            .filter(AvisoAdopcion.fecha_ingreso >= desde)
+            .group_by(fecha_dia)
+            .order_by(fecha_dia.asc())
+            .all()
+        )
+        
+        conteo_map = {r.fecha.isoformat(): int(r.cantidad) for r in rows}
+        data = []
+        for i in range(dias):
+            f = (desde + timedelta(days=i)).isoformat()
+            data.append({"fecha": f, "cantidad": conteo_map.get(f, 0)})
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
+@bp.route("/api/estadisticas/por-tipo")
+def api_estadisticas_por_tipo():
+    try:
+        rows = (
+            db.session.query(AvisoAdopcion.tipo, func.count().label("cantidad"))
+            .group_by(AvisoAdopcion.tipo)
+            .all()
+        )
+        data = [{"tipo": t or "desconocido", "cantidad": int(c)} for t, c in rows]
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+@bp.route("/api/estadisticas/por-mes")
+def api_estadisticas_por_mes():
+    try:
+        anio = int(request.args.get("anio", date.today().year))
+
+        mes_expr = func.month(AvisoAdopcion.fecha_ingreso)
+        anio_expr = func.year(AvisoAdopcion.fecha_ingreso)
+
+        rows = (
+            db.session.query(
+                mes_expr.label("mes"),
+                AvisoAdopcion.tipo.label("tipo"),
+                func.count().label("cantidad"),
+            )
+            .filter(anio_expr == anio)
+            .group_by(mes_expr, AvisoAdopcion.tipo)
+            .order_by(mes_expr.asc())
+            .all()
+        )
+
+        data = [
+            {
+                "mes": int(r.mes) if r.mes is not None else None,
+                "tipo": r.tipo or "desconocido",
+                "cantidad": int(r.cantidad),
+            }
+            for r in rows
+        ]
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+# ========== API COMENTARIOS ==========
+@bp.route("/api/avisos/<int:aviso_id>/comentarios", methods=["GET"])
+def api_listar_comentarios(aviso_id):
+    aviso = db.session.get(AvisoAdopcion, aviso_id)
+    if not aviso:
+        return jsonify({"error": "Aviso no encontrado"}), 404
+
+    data = [{
+        "id": c.id,
+        "nombre": c.nombre,
+        "texto": c.texto,
+        "fecha": c.fecha.isoformat(timespec="seconds"),
+    } for c in aviso.comentarios]  # ya viene ordenado DESC
+    return jsonify(data), 200
+
+
+@bp.route("/api/avisos/<int:aviso_id>/comentarios", methods=["POST"])
+def api_crear_comentario(aviso_id):
+    aviso = db.session.get(AvisoAdopcion, aviso_id)
+    if not aviso:
+        return jsonify({"error": "Aviso no encontrado"}), 404
+
+    payload = request.get_json(silent=True) or {}
+    nombre = (payload.get("nombre") or "").strip()
+    texto  = (payload.get("texto") or "").strip()
+
+    errors = validate_comentario(nombre, texto)
+    if errors:
+        return jsonify({"errors": errors}), 400
+
+    c = Comentario(nombre=nombre, texto=texto, aviso=aviso, fecha=datetime.utcnow())
+    db.session.add(c)
+    db.session.commit()
+
+    return jsonify({
+        "id": c.id, "nombre": c.nombre, "texto": c.texto,
+        "fecha": c.fecha.isoformat(timespec="seconds"),
+    }), 201

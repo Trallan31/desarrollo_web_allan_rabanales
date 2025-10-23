@@ -104,3 +104,24 @@ def validate_aviso(form, files, now=None):
 
     return (len(errores) == 0, errores)
 
+# --- Comentarios: validación ---
+def validate_comentario(nombre: str | None, texto: str | None):
+    errors = {}
+    nombre = (nombre or "").strip()
+    texto  = (texto  or "").strip()
+
+    if not nombre:
+        errors["nombre"] = "El nombre es obligatorio."
+    elif len(nombre) < 3:
+        errors["nombre"] = "El nombre debe tener al menos 3 caracteres."
+    elif len(nombre) > 80:
+        errors["nombre"] = "El nombre no debe superar 80 caracteres."
+
+    if not texto:
+        errors["texto"] = "El comentario es obligatorio."
+    elif len(texto) < 5:
+        errors["texto"] = "El comentario debe tener al menos 5 caracteres."
+    elif len(texto) > 300:
+        errors["texto"] = "El comentario no debe superar 300 caracteres."
+
+    return errors

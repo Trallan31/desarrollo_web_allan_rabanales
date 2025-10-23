@@ -40,8 +40,32 @@
 </dialog>
 {% endif %}
 
+<section id="comentarios" class="card" data-aviso-id="{{ aviso.id }}">
+  <h3>Comentarios ( <span id="comentarios-total">0</span> )</h3>
+  <!-- Listado -->
+  <ul id="comentarios-lista" class="comentarios-lista" aria-live="polite" aria-busy="true"></ul>
+  <!-- Formulario -->
+  <form id="comentario-form" novalidate>
+    <div class="field">
+      <label for="c-nombre">Nombre</label>
+      <input id="c-nombre" name="nombre" type="text" required minlength="3" maxlength="80" />
+      <small class="error" id="err-nombre" aria-live="polite"></small>
+    </div>
+    <div class="field">
+      <label for="c-texto">Comentario</label>
+      <textarea id="c-texto" name="texto" rows="4" cols="50" required minlength="5" maxlength="300"></textarea>
+      <small class="error" id="err-texto" aria-live="polite"></small>
+    </div>
+    <button type="submit" class="button-link">Agregar comentario</button>
+    <small class="error" id="err-global" aria-live="polite"></small>
+    <small class="ok" id="ok-global" aria-live="polite" hidden>Comentario agregado.</small>
+  </form>
+</section>
+
 <div class="acciones">
   <a class="button-link" href="{{ url_for('web.listado') }}">Volver al listado</a>
   <a class="button-link" href="{{ url_for('web.index') }}">Volver a la portada</a>
 </div>
+
+<script src="{{ url_for('static', filename='js/comentarios.js') }}" defer></script>
 {% endblock %}
