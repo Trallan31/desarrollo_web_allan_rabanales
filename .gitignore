@@ -1,10 +1,14 @@
 # Entorno virtual
 venv/
 .env
+
 # Archivos temporales
 *.pyc
 __pycache__/
+app/__pycache__/
+
 # Archivos de VSCode
 .vscode/
-# Subidas o contenido pesado
-uploads/
+
+# Subidas de usuarios
+app/static/uploads/

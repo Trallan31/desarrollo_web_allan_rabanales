@@ -1,27 +1,37 @@
-# Tarea 1 - Desarrollo Web
+# Tarea 3 - Desarrollo Web
 
 ## Descripción
-La tarea consiste en un prototipo de sistema de adopción de mascotas. 
-La aplicación no guarda datos reales ni requiere servidor; se enfoca en mostrar las interfaces, la validación de formularios y la navegación entre pantallas.
+Esta tarea extiende el prototipo de la **Tarea 2**, manteniendo la aplicación en **Flask (Python)** con base de datos **MySQL + SQLAlchemy**, pero ahora incorporando funcionalidades **dinámicas mediante AJAX (fetch / Promesas)**.
 
-Incluye:
-- **Portada** con los últimos 5 avisos de adopción.
-- **Formulario** para agregar un aviso con validaciones en JS.
-- **Listado** de avisos de ejemplo.
-- **Detalle** de un aviso con fotos ampliables.
-- **Estadísticas** representadas con tres gráficos estáticos.
+La aplicación permite:
+- **Portada** con mensaje de bienvenida, menú y los últimos 5 avisos reales desde la base de datos.
+- **Formulario de agregar aviso** con validaciones en **JavaScript** y **Python** (lado servidor). Al enviar, inserta en las tablas `aviso_adopcion`, `contactar_por` y `foto`, y guarda las fotos en disco.
+- **Listado de avisos** obtenido desde la base de datos, en páginas de 5 filas, con navegación Anterior / Siguiente.
+- **Detalle de aviso** cargado desde la BD, mostrando toda la información y fotos ampliables en un modal.
+- **Comentarios** cargados y enviados de forma **asíncrona (AJAX)** con `fetch()`, con validaciones tanto del lado del **cliente** como del **servidor**.
+- **Estadísticas dinámicas** generadas desde la BD mediante **3 endpoints Flask** y graficadas en el cliente con **Highcharts**.
 
 ## Decisiones tomadas
-- Mantener un **diseño consistente** en todas las páginas, reutilizando cabecera, menú y pie de página.
-- Definir **variables CSS** para colores y estilos básicos (`--bg`, `--brand`, `--border`) que facilitan mantener la coherencia visual.
-- Separar la lógica en varios archivos JS:
-  - `portada.js` → muestra los últimos 5 avisos en la portada.
-  - `agregar.js` → controla el formulario (regiones, comunas, validaciones y fotos).
-  - `listado.js` → hace que las filas de la tabla sean clickeables.
-  - `detalle.js` → permite ampliar fotos en una ventana modal con `<dialog>`.
-  - `region_comuna.js` → contiene las regiones y comunas de Chile.
-  - `validaciones.js` → centraliza todas las validaciones del formulario.
-- Para los **gráficos** (punto 4) se eligió usar **SVG estáticos**.
-- Validar todos los formularios solo con **JavaScript** (no con `required`).
-- Usar un **modal con `<dialog>`** para confirmar la creación de un aviso y para ampliar las fotos, mejorando la experiencia de usuario.
-- Asegurar que todo el código pase las validaciones de **HTML y CSS del W3C** para evitar descuentos.
+- Mantener el **diseño general y estructura Flask** de la T2, extendiendo la funcionalidad:
+  - `app/models.py` → se agregó el modelo **Comentario** y la relación con `AvisoAdopcion`.
+  - `app/routes.py` → se añadieron rutas API para **comentarios** y **estadísticas**.
+  - `app/validators.py` → se incluyó `validate_comentario` con las reglas requeridas.
+  - `app/static/js/comentarios.js` → carga, validación y envío de comentarios usando `fetch()`.
+  - `app/static/js/estadisticas.js` → obtiene datos vía `fetch()` y renderiza 3 gráficos con **Highcharts**.
+- Las **estadísticas** cumplen el uso de *AJAX o Promesas con XHR*, implementado mediante la **API moderna `fetch()`**:
+  - `/api/estadisticas/por-dia?dias=7` → gráfico de líneas (últimos 7 días).
+  - `/api/estadisticas/por-tipo` → gráfico de torta (total por tipo).
+  - `/api/estadisticas/por-mes?anio=YYYY` → gráfico de barras agrupadas (por mes y tipo).
+- Para **validación HTML**, se sanitizan los SVG generados por Highcharts, eliminando atributos no válidos (`text-align`, `transform-origin`)
+- Se usó `datetime.utcnow()` al crear un comentario para compatibilidad con MySQL, ya que la columna `fecha` no tenía un valor por defecto.
+- En el formulario de comentarios:
+  - Validación **cliente (JS)** y **servidor (Python)** con mensajes accesibles (`aria-live`).
+  - Inserción y actualización del listado **sin recargar la página**.
+
+## Extra / Dificultades encontradas
+- El campo `fecha` de la tabla `comentario` en MySQL no tenía `DEFAULT CURRENT_TIMESTAMP`, por lo que se producía un error al insertar.  
+  **Solución:** agregar `fecha=datetime.utcnow()` desde Flask al crear el comentario.
+- Algunos atributos generados automáticamente por Highcharts (`text-align`, `transform-origin`) generaban errores en el validador HTML.  
+  **Solución:** sanitizar los SVG luego del renderizado eliminando dichos atributos, y desactivar los créditos de Highcharts.
+- Para evitar problemas de CORS y asegurar validación local, se cargó **Highcharts desde CDN con `defer`**, y se ejecutan los fetch solo al tener la librería disponible.
+- En los comentarios, se reforzó la validación del lado cliente para que no se envíen campos vacíos o menores al tamaño mínimo.
