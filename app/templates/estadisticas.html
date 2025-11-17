@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Estadísticas</h2>
+
+<div class="charts">
+  <!-- 1) Gráfico de líneas: avisos por día -->
+  <figure class="card">
+    <figcaption><strong>Avisos por día (últimos 7 días)</strong></figcaption>
+    <div id="grafico-por-dia" class="chart" role="img" aria-label="Gráfico de líneas: avisos por día"></div>
+  </figure>
+
+  <!-- 2) Gráfico de torta: total por tipo (gato/perro) -->
+  <figure class="card">
+    <figcaption><strong>Total de avisos por tipo</strong></figcaption>
+    <div id="grafico-torta-tipo" class="chart" role="img" aria-label="Gráfico de torta: total por tipo (gato/perro)"></div>
+  </figure>
+
+  <!-- 3) Barras agrupadas por mes: Gatos vs Perros -->
+  <figure class="card">
+    <figcaption><strong>Avisos por mes (Gatos vs Perros)</strong></figcaption>
+    <div id="grafico-barras-mes" class="chart" role="img" aria-label="Gráfico de barras agrupadas por mes"></div>
+  </figure>
+</div>
+
+<div class="acciones">
+  <a class="button-link" href="{{ url_for('web.index') }}">Volver a la Portada</a>
+</div>
+
+<!-- Highcharts -->
+<script src="https://code.highcharts.com/highcharts.js" defer></script>
+<!-- Lógica de estadísticas -->
+<script src="{{ url_for('static', filename='js/estadisticas.js') }}" defer></script>
+{% endblock %}

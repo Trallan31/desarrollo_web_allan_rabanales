@@ -1,27 +1,72 @@
-# Tarea 1 - Desarrollo Web
+# Tarea 4 - Desarrollo Web
 
 ## Descripción
-La tarea consiste en un prototipo de sistema de adopción de mascotas. 
-La aplicación no guarda datos reales ni requiere servidor; se enfoca en mostrar las interfaces, la validación de formularios y la navegación entre pantallas.
+Esta tarea agrega a la aplicación de adopción una **funcionalidad de evaluación de avisos**, implementada con **Spring Boot + Thymeleaf + JPA (MySQL)** y llamadas **asíncronas en JavaScript**.
 
-Incluye:
-- **Portada** con los últimos 5 avisos de adopción.
-- **Formulario** para agregar un aviso con validaciones en JS.
-- **Listado** de avisos de ejemplo.
-- **Detalle** de un aviso con fotos ampliables.
-- **Estadísticas** representadas con tres gráficos estáticos.
+La aplicación permite:
+
+- **Listado de avisos de adopción** en `http://localhost:8080/avisos`, mostrando:
+  - ID  
+  - Fecha publicación  
+  - Sector  
+  - Cantidad  
+  - Tipo / Edad  
+  - Comuna  
+  - Nota  
+  - Acción **Evaluar**
+- En la columna **Nota** se muestra:
+  - El **promedio** de las notas asociadas al aviso (1 decimal), o
+  - Un **“-”** si aún no existen evaluaciones.
+- Al hacer clic en **Evaluar**:
+  - Se solicita una nota **entera entre 1 y 7** mediante `prompt`.
+  - La nota se envía **asíncronamente** via `fetch` al backend.
+  - El backend guarda la nota y retorna el **nuevo promedio**.
+  - La página **actualiza solo la celda de la nota**, sin recargar.
 
 ## Decisiones tomadas
-- Mantener un **diseño consistente** en todas las páginas, reutilizando cabecera, menú y pie de página.
-- Definir **variables CSS** para colores y estilos básicos (`--bg`, `--brand`, `--border`) que facilitan mantener la coherencia visual.
-- Separar la lógica en varios archivos JS:
-  - `portada.js` → muestra los últimos 5 avisos en la portada.
-  - `agregar.js` → controla el formulario (regiones, comunas, validaciones y fotos).
-  - `listado.js` → hace que las filas de la tabla sean clickeables.
-  - `detalle.js` → permite ampliar fotos en una ventana modal con `<dialog>`.
-  - `region_comuna.js` → contiene las regiones y comunas de Chile.
-  - `validaciones.js` → centraliza todas las validaciones del formulario.
-- Para los **gráficos** (punto 4) se eligió usar **SVG estáticos**.
-- Validar todos los formularios solo con **JavaScript** (no con `required`).
-- Usar un **modal con `<dialog>`** para confirmar la creación de un aviso y para ampliar las fotos, mejorando la experiencia de usuario.
-- Asegurar que todo el código pase las validaciones de **HTML y CSS del W3C** para evitar descuentos.
+- Se reutiliza la base de datos `tarea2`, manteniendo `aviso_adopcion` y agregando la tabla `nota` mediante `tabla-nota.sql`.
+- Se modelaron las entidades con JPA:
+  - `AvisoAdopcion`
+  - `Nota` (con `@ManyToOne` hacia `AvisoAdopcion`)
+- En `AvisoAdopcion` se agregó:
+  ```
+  @Transient 
+  private Double promedioNota;
+  ```
+  para enviar al template el promedio calculado sin almacenarlo en BD.
+- Lado servidor:
+  - `AvisoController`:
+    - `GET /avisos` obtiene todos los avisos.
+    - Calcula el promedio de notas por aviso.
+    - Si no hay notas, `promedioNota = null`.
+  - `NotaRestController` (API REST):
+    - Recibe nuevas notas y valida:
+      - Que el aviso exista.
+      - Que la nota sea **entera entre 1 y 7**.
+    - Guarda la nota y retorna:
+      ```
+      { "promedio": <valor> }
+      ```
+- Lado cliente:
+  - `static/js/notas.js`:
+    - Maneja el clic del botón “Evaluar”.
+    - Valida nota entera en [1,7].
+    - Envía con `fetch` la evaluación.
+    - Actualiza la celda del promedio dinámicamente.
+  - `templates/avisos.html`:
+    - Lista los avisos con `th:each`.
+    - Muestra promedio formateado o “-”.
+    - Botón con `data-aviso-id` para JS.
+
+## Extra / Dificultades encontradas
+- **Validación de notas enteras:**  
+  Se corrigió la aceptación errónea de decimales, validando tanto en frontend como backend.
+- **Promedio sin modificar la BD:**  
+  No se agregó un campo nuevo; se usa un atributo `@Transient` y se calcula al vuelo.
+- **Actualización sin recargar página:**  
+  Implementado con `fetch` y manipulación del DOM. Se maneja error de red o estado HTTP incorrecto mostrando alertas.
+
+## Para la corrección
+- Levantar la aplicación y entrar a:  
+  **http://localhost:8080/avisos**
+- La base de datos debe ser `tarea2` con la tabla `nota` creada mediante el script entregado.
