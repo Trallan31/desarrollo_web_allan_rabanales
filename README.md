@@ -1,37 +1,72 @@
-# Tarea 3 - Desarrollo Web
+# Tarea 4 - Desarrollo Web
 
 ## Descripción
-Esta tarea extiende el prototipo de la **Tarea 2**, manteniendo la aplicación en **Flask (Python)** con base de datos **MySQL + SQLAlchemy**, pero ahora incorporando funcionalidades **dinámicas mediante AJAX (fetch / Promesas)**.
+Esta tarea agrega a la aplicación de adopción una **funcionalidad de evaluación de avisos**, implementada con **Spring Boot + Thymeleaf + JPA (MySQL)** y llamadas **asíncronas en JavaScript**.
 
 La aplicación permite:
-- **Portada** con mensaje de bienvenida, menú y los últimos 5 avisos reales desde la base de datos.
-- **Formulario de agregar aviso** con validaciones en **JavaScript** y **Python** (lado servidor). Al enviar, inserta en las tablas `aviso_adopcion`, `contactar_por` y `foto`, y guarda las fotos en disco.
-- **Listado de avisos** obtenido desde la base de datos, en páginas de 5 filas, con navegación Anterior / Siguiente.
-- **Detalle de aviso** cargado desde la BD, mostrando toda la información y fotos ampliables en un modal.
-- **Comentarios** cargados y enviados de forma **asíncrona (AJAX)** con `fetch()`, con validaciones tanto del lado del **cliente** como del **servidor**.
-- **Estadísticas dinámicas** generadas desde la BD mediante **3 endpoints Flask** y graficadas en el cliente con **Highcharts**.
+
+- **Listado de avisos de adopción** en `http://localhost:8080/avisos`, mostrando:
+  - ID  
+  - Fecha publicación  
+  - Sector  
+  - Cantidad  
+  - Tipo / Edad  
+  - Comuna  
+  - Nota  
+  - Acción **Evaluar**
+- En la columna **Nota** se muestra:
+  - El **promedio** de las notas asociadas al aviso (1 decimal), o
+  - Un **“-”** si aún no existen evaluaciones.
+- Al hacer clic en **Evaluar**:
+  - Se solicita una nota **entera entre 1 y 7** mediante `prompt`.
+  - La nota se envía **asíncronamente** via `fetch` al backend.
+  - El backend guarda la nota y retorna el **nuevo promedio**.
+  - La página **actualiza solo la celda de la nota**, sin recargar.
 
 ## Decisiones tomadas
-- Mantener el **diseño general y estructura Flask** de la T2, extendiendo la funcionalidad:
-  - `app/models.py` → se agregó el modelo **Comentario** y la relación con `AvisoAdopcion`.
-  - `app/routes.py` → se añadieron rutas API para **comentarios** y **estadísticas**.
-  - `app/validators.py` → se incluyó `validate_comentario` con las reglas requeridas.
-  - `app/static/js/comentarios.js` → carga, validación y envío de comentarios usando `fetch()`.
-  - `app/static/js/estadisticas.js` → obtiene datos vía `fetch()` y renderiza 3 gráficos con **Highcharts**.
-- Las **estadísticas** cumplen el uso de *AJAX o Promesas con XHR*, implementado mediante la **API moderna `fetch()`**:
-  - `/api/estadisticas/por-dia?dias=7` → gráfico de líneas (últimos 7 días).
-  - `/api/estadisticas/por-tipo` → gráfico de torta (total por tipo).
-  - `/api/estadisticas/por-mes?anio=YYYY` → gráfico de barras agrupadas (por mes y tipo).
-- Para **validación HTML**, se sanitizan los SVG generados por Highcharts, eliminando atributos no válidos (`text-align`, `transform-origin`)
-- Se usó `datetime.utcnow()` al crear un comentario para compatibilidad con MySQL, ya que la columna `fecha` no tenía un valor por defecto.
-- En el formulario de comentarios:
-  - Validación **cliente (JS)** y **servidor (Python)** con mensajes accesibles (`aria-live`).
-  - Inserción y actualización del listado **sin recargar la página**.
+- Se reutiliza la base de datos `tarea2`, manteniendo `aviso_adopcion` y agregando la tabla `nota` mediante `tabla-nota.sql`.
+- Se modelaron las entidades con JPA:
+  - `AvisoAdopcion`
+  - `Nota` (con `@ManyToOne` hacia `AvisoAdopcion`)
+- En `AvisoAdopcion` se agregó:
+  ```
+  @Transient 
+  private Double promedioNota;
+  ```
+  para enviar al template el promedio calculado sin almacenarlo en BD.
+- Lado servidor:
+  - `AvisoController`:
+    - `GET /avisos` obtiene todos los avisos.
+    - Calcula el promedio de notas por aviso.
+    - Si no hay notas, `promedioNota = null`.
+  - `NotaRestController` (API REST):
+    - Recibe nuevas notas y valida:
+      - Que el aviso exista.
+      - Que la nota sea **entera entre 1 y 7**.
+    - Guarda la nota y retorna:
+      ```
+      { "promedio": <valor> }
+      ```
+- Lado cliente:
+  - `static/js/notas.js`:
+    - Maneja el clic del botón “Evaluar”.
+    - Valida nota entera en [1,7].
+    - Envía con `fetch` la evaluación.
+    - Actualiza la celda del promedio dinámicamente.
+  - `templates/avisos.html`:
+    - Lista los avisos con `th:each`.
+    - Muestra promedio formateado o “-”.
+    - Botón con `data-aviso-id` para JS.
 
 ## Extra / Dificultades encontradas
-- El campo `fecha` de la tabla `comentario` en MySQL no tenía `DEFAULT CURRENT_TIMESTAMP`, por lo que se producía un error al insertar.  
-  **Solución:** agregar `fecha=datetime.utcnow()` desde Flask al crear el comentario.
-- Algunos atributos generados automáticamente por Highcharts (`text-align`, `transform-origin`) generaban errores en el validador HTML.  
-  **Solución:** sanitizar los SVG luego del renderizado eliminando dichos atributos, y desactivar los créditos de Highcharts.
-- Para evitar problemas de CORS y asegurar validación local, se cargó **Highcharts desde CDN con `defer`**, y se ejecutan los fetch solo al tener la librería disponible.
-- En los comentarios, se reforzó la validación del lado cliente para que no se envíen campos vacíos o menores al tamaño mínimo.
+- **Validación de notas enteras:**  
+  Se corrigió la aceptación errónea de decimales, validando tanto en frontend como backend.
+- **Promedio sin modificar la BD:**  
+  No se agregó un campo nuevo; se usa un atributo `@Transient` y se calcula al vuelo.
+- **Actualización sin recargar página:**  
+  Implementado con `fetch` y manipulación del DOM. Se maneja error de red o estado HTTP incorrecto mostrando alertas.
+
+## Para la corrección
+- Levantar la aplicación y entrar a:  
+  **http://localhost:8080/avisos**
+- La base de datos debe ser `tarea2` con la tabla `nota` creada mediante el script entregado.
