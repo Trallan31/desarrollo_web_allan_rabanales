@@ -1,37 +1,52 @@
-# Tarea 3 - Desarrollo Web
+# Plataforma de Adopción de Mascotas
 
-## Descripción
-Esta tarea extiende el prototipo de la **Tarea 2**, manteniendo la aplicación en **Flask (Python)** con base de datos **MySQL + SQLAlchemy**, pero ahora incorporando funcionalidades **dinámicas mediante AJAX (fetch / Promesas)**.
+Aplicación web full-stack desarrollada con Flask (Python) y MySQL, con funcionalidades dinámicas implementadas mediante AJAX (fetch API). El sistema permite publicar, listar, consultar y comentar avisos de adopción de mascotas, además de visualizar estadísticas interactivas.
 
-La aplicación permite:
-- **Portada** con mensaje de bienvenida, menú y los últimos 5 avisos reales desde la base de datos.
-- **Formulario de agregar aviso** con validaciones en **JavaScript** y **Python** (lado servidor). Al enviar, inserta en las tablas `aviso_adopcion`, `contactar_por` y `foto`, y guarda las fotos en disco.
-- **Listado de avisos** obtenido desde la base de datos, en páginas de 5 filas, con navegación Anterior / Siguiente.
-- **Detalle de aviso** cargado desde la BD, mostrando toda la información y fotos ampliables en un modal.
-- **Comentarios** cargados y enviados de forma **asíncrona (AJAX)** con `fetch()`, con validaciones tanto del lado del **cliente** como del **servidor**.
-- **Estadísticas dinámicas** generadas desde la BD mediante **3 endpoints Flask** y graficadas en el cliente con **Highcharts**.
+## Tecnologías
 
-## Decisiones tomadas
-- Mantener el **diseño general y estructura Flask** de la T2, extendiendo la funcionalidad:
-  - `app/models.py` → se agregó el modelo **Comentario** y la relación con `AvisoAdopcion`.
-  - `app/routes.py` → se añadieron rutas API para **comentarios** y **estadísticas**.
-  - `app/validators.py` → se incluyó `validate_comentario` con las reglas requeridas.
-  - `app/static/js/comentarios.js` → carga, validación y envío de comentarios usando `fetch()`.
-  - `app/static/js/estadisticas.js` → obtiene datos vía `fetch()` y renderiza 3 gráficos con **Highcharts**.
-- Las **estadísticas** cumplen el uso de *AJAX o Promesas con XHR*, implementado mediante la **API moderna `fetch()`**:
-  - `/api/estadisticas/por-dia?dias=7` → gráfico de líneas (últimos 7 días).
-  - `/api/estadisticas/por-tipo` → gráfico de torta (total por tipo).
-  - `/api/estadisticas/por-mes?anio=YYYY` → gráfico de barras agrupadas (por mes y tipo).
-- Para **validación HTML**, se sanitizan los SVG generados por Highcharts, eliminando atributos no válidos (`text-align`, `transform-origin`)
-- Se usó `datetime.utcnow()` al crear un comentario para compatibilidad con MySQL, ya que la columna `fecha` no tenía un valor por defecto.
-- En el formulario de comentarios:
-  - Validación **cliente (JS)** y **servidor (Python)** con mensajes accesibles (`aria-live`).
-  - Inserción y actualización del listado **sin recargar la página**.
+- **Backend:** Python, Flask, SQLAlchemy (ORM), MySQL
+- **Frontend:** HTML5, CSS3, JavaScript (vanilla), Highcharts
+- **Arquitectura:** MVC con separación de modelos, rutas y validadores
+- **API:** Endpoints REST para comentarios y estadísticas con respuesta JSON
+- **Validación:** Doble capa (cliente y servidor) con mensajes accesibles (ARIA)
 
-## Extra / Dificultades encontradas
-- El campo `fecha` de la tabla `comentario` en MySQL no tenía `DEFAULT CURRENT_TIMESTAMP`, por lo que se producía un error al insertar.  
-  **Solución:** agregar `fecha=datetime.utcnow()` desde Flask al crear el comentario.
-- Algunos atributos generados automáticamente por Highcharts (`text-align`, `transform-origin`) generaban errores en el validador HTML.  
-  **Solución:** sanitizar los SVG luego del renderizado eliminando dichos atributos, y desactivar los créditos de Highcharts.
-- Para evitar problemas de CORS y asegurar validación local, se cargó **Highcharts desde CDN con `defer`**, y se ejecutan los fetch solo al tener la librería disponible.
-- En los comentarios, se reforzó la validación del lado cliente para que no se envíen campos vacíos o menores al tamaño mínimo.
+## Funcionalidades principales
+
+- **Portada dinámica:** Muestra los últimos 5 avisos de adopción obtenidos desde la base de datos.
+- **Publicación de avisos:** Formulario con validación en JavaScript y Python. Al enviar, inserta datos en las tablas `aviso_adopcion`, `contactar_por` y `foto`, y almacena las imágenes en disco.
+- **Listado paginado:** Visualización de avisos con paginación de 5 filas por pagina y navegación Anterior / Siguiente.
+- **Detalle de aviso:** Vista completa con información y galería de fotos ampliables en modal.
+- **Comentarios asincrónicos:** Carga y envió de comentarios vía AJAX (`fetch`) con validación en cliente y servidor, actualización del listado sin recarga de pagina.
+- **Estadísticas interactivas:** Tres gráficos dinámicos generados desde la base de datos y renderizados con Highcharts:
+  - Linea: avisos publicados en los últimos 7 días
+  - Torta: distribución por tipo de mascota
+  - Barras agrupadas: avisos por mes y tipo (filtrable por anio)
+
+## Arquitectura del proyecto
+app/
+├── models.py          # Modelos SQLAlchemy (AvisoAdopcion, Comentario, ContactarPor, Foto)
+├── routes.py          # Rutas Flask y endpoints API REST
+├── validators.py      # Validaciones de formularios (Python)
+├── static/
+│   ├── js/
+│   │   ├── comentarios.js     # Lógica AJAX de comentarios
+│   │   └── estadisticas.js    # Consumo de API y renderizado de gráficos
+│   └── uploads/               # Almacenamiento de fotos subidas
+└── templates/         # Vistas HTML (Jinja2)
+
+## Decisiones técnicas destacadas
+
+- **API REST para estadísticas:** Se implementaron 3 endpoints independientes (`/api/estadisticas/por-dia`, `/api/estadisticas/por-tipo`, `/api/estadisticas/por-mes`) que devuelven datos en JSON, desacoplando la lógica de presentación del backend.
+- **Sanitización de SVG:** Se eliminaron atributos no validos generados por Highcharts (`text-align`, `transform-origin`) para garantizar compatibilidad con validadores HTML.
+- **Manejo de fechas:** Uso de `datetime.utcnow()` desde Flask para compatibilidad con MySQL, ante la ausencia de `DEFAULT CURRENT_TIMESTAMP` en el esquema.
+- **Accesibilidad:** Mensajes de validación implementados con `aria-live` para lectores de pantalla.
+- **Carga segura de librerías:** Highcharts cargado desde CDN con atributo `defer`, asegurando que los scripts de fetch solo se ejecuten una vez disponible la librería.
+
+## Instalación y ejecución
+
+1. Clonar el repositorio
+2. Crear entorno virtual: `python -m venv venv`
+3. Activar: `source venv/bin/activate` (Linux/Mac) o `venv\Scripts\activate` (Windows)
+4. Instalar dependencias: `pip install -r requirements.txt`
+5. Configurar base de datos MySQL y actualizar credenciales en `config.py`
+6. Ejecutar: `flask run`
